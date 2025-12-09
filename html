@@ -1,0 +1,276 @@
+<app-common-dialog
+  [header]="'Custom Tables'"
+  [showHeader]="true"
+  [showFooter]="false"
+  [visible]="visible"
+  (close)="onClose()"
+  [width]="'xl'"
+>
+  <div class="custom-table-wrapper">
+    <div
+      class="head-section d-flex align-items-center column-gap-2 mb-2 justify-content-end flex-wrap row-gap-2"
+    >
+      <button class="outline-btn">Total</button>
+      <button class="outline-btn">Summary Statistics</button>
+      <button class="button-excel d-flex align-items-center column-gap-1">
+        <img
+          src="./assets/images/questions/download-icon.svg"
+          alt="download-icon"
+        />Excel
+      </button>
+
+      <div>
+        <app-custom-dropdown
+          [options]="positions"
+          [(ngModel)]="selectedPosition"
+          placeholder="Select Position"
+        >
+        </app-custom-dropdown>
+      </div>
+
+      <div class="d-flex align-items-center column-gap-2">
+        <div class="mb-2">Hide</div>
+        <p-inputSwitch
+          [(ngModel)]="isHideEnabled"
+          (ngModelChange)="toggleVisibility()"
+          id="visibilityToggle"
+        ></p-inputSwitch>
+      </div>
+
+      <div class="mode-toggle">
+        <div
+          class="toggle-option"
+          [class.active]="mode === 'normal'"
+          (click)="setMode('normal')"
+        >
+          Normal
+        </div>
+
+        <div
+          class="toggle-option"
+          [class.active]="mode === 'compact'"
+          (click)="setMode('compact')"
+        >
+          Compact
+        </div>
+      </div>
+    </div>
+    <div class="d-flex w-100 border-rd-12 question-drag-section">
+      <div class="left-question-section">
+        <!-- left side  -->
+        <div
+          class="question-card font-l-medium text-bs-dark border-top-0 border-start-0"
+        >
+          Variables
+        </div>
+
+        <div class="search-section border-top-0 border-bottom-0">
+          <div
+            *ngIf="showSearch"
+            class="d-flex align-items-center bg-bs-light px-3 py-2 shadow-sm cursor"
+            (click)="focusSearchInput()"
+          >
+            <img
+              src="../assets/images/login/search.svg"
+              class="rounded-circle"
+              alt="Search Icon"
+            />
+            <input
+              #searchInput
+              type="text"
+              class="form-control-search border-0 custom-placeholder ms-2 search"
+              placeholder="Search ..."
+            />
+          </div>
+        </div>
+        <div
+          cdkDropList
+          id="questionList"
+          [cdkDropListData]="questions"
+          [cdkDropListConnectedTo]="['columnList', 'rowList']"
+        >
+          <!-- questions section -->
+          @for(q of questions; track q.id){
+          <div
+            class="question-card pointer font-base-medium text-bs-dark"
+            [class.active]="selectedQuestionId === q.id"
+            (click)="selectQuestion(q.id)"
+            cdkDrag
+            [cdkDragData]="q"
+          >
+            {{ q.id }}. {{ q.question }}
+          </div>
+          }
+
+          <div class="question-card font-l-medium text-bs-dark">Answers</div>
+
+          <div class="question-card border-bottom-0 border-start-0">
+            <!-- answers section -->
+            @if(selectedAnswers.length > 0){ @for(ans of selectedAnswers; track
+            ans){
+            <div class="answer-card font-base-medium text-bs-dark">
+              {{ ans }}
+            </div>
+            } } @else {
+            <div class="text-muted small">
+              Select a question to view answers
+            </div>
+            }
+          </div>
+        </div>
+      </div>
+
+      <div class="flex-grow-1">
+        <!-- right side -->
+        <div
+          class="bg-bs-grey-shade text-center py-3 font-sm-medium text-bs-grey-300 border-round-right"
+          cdkDropList
+          id="columnList"
+          [cdkDropListData]="columnDropList"
+          [cdkDropListConnectedTo]="['questionList']"
+          (cdkDropListDropped)="onDrop($event, 'column')"
+          [class.drop-active]="columnActive"
+          (cdkDropListEntered)="onDropListEnter($event)"
+          (cdkDropListExited)="onDropListExit($event)"
+        >
+          COLUMNS
+        </div>
+        <div class="d-flex">
+          <div
+            class="rows-label bg-bs-grey-shade text-center px-3 font-sm-medium text-bs-grey-300"
+            cdkDropList
+            id="rowList"
+            [cdkDropListData]="rowDropList"
+            [cdkDropListConnectedTo]="['questionList']"
+            (cdkDropListDropped)="onDrop($event, 'row')"
+            [class.drop-active]="rowActive"
+            (cdkDropListEntered)="onDropListEnter($event)"
+            (cdkDropListExited)="onDropListExit($event)"
+          >
+            ROWS
+          </div>
+
+          <div class="w-75 p-3">
+            <!-- Table content area-->
+            @if (selectedRowQuestions && selectedColumnQuestions?.length) {
+            <table class="table table-bordered w-100">
+              <thead>
+                <!-- SINGLE HEADER -->
+                <tr>
+                  <th
+                    class="text-center"
+                    [attr.colspan]="
+                      selectedColumnQuestions[0].answers.length + 1
+                    "
+                  >
+                    {{ selectedColumnQuestions[0].id }} -
+                    {{ selectedColumnQuestions[0].question }}
+                  </th>
+                </tr>
+
+                <!-- COLUMN ANSWERS -->
+                <tr>
+                  <th></th>
+                  @for (col of selectedColumnQuestions[0].answers; track col) {
+                  <th class="text-center">{{ col }}</th>
+                  }
+                </tr>
+              </thead>
+
+              <tbody>
+                @for (row of generatedMatrix; track row.row) {
+                <tr>
+                  <td class="fw-bold">{{ row.row }}</td>
+
+                  @for (val of row.cols; track val) {
+                  <td class="text-center">{{ val }}</td>
+                  }
+                </tr>
+                }
+              </tbody>
+            </table>
+            } @if (generatedTable) {
+
+            <!-- ------------------------------------------------------------------------------------------------- -->
+            <!-- Column-wise -->
+            @if (generatedTable.type === 'column') {
+            <table class="w-100 table-wrapper">
+              <thead>
+                <!-- Row 1: Question text -->
+                <tr>
+                  <th
+                    [attr.colspan]="generatedTable.headers.length"
+                    class="text-center font-base-medium text-bs-dark py-4"
+                  >
+                    {{ generatedTable.qid }} - {{ generatedTable.questionText }}
+                  </th>
+                </tr>
+
+                <!-- Row 2: Answer headers -->
+                <tr class="py-3 px-5 text-center table-border">
+                  @for(head of generatedTable.headers; track head) {
+                  <th class="table-border">{{ head }}</th>
+                  }
+                </tr>
+
+                <tr class="py-3 px-5 text-center table-border">
+                  @for(head of generatedTable.headers; track head) {
+                  <th class="table-border">Count</th>
+                  }
+                </tr>
+              </thead>
+
+              <tbody class="table-border">
+                <!-- Row 3: Counts -->
+                <tr class="py-3 px-5 text-center">
+                  @for(val of generatedTable.values; track val) {
+                  <td class="table-border">{{ val }}</td>
+                  }
+                </tr>
+              </tbody>
+            </table>
+            }
+
+            <!-- Row-wise -->
+            @else {
+            <table class="w-50 table-wrapper">
+              <thead>
+                <tr>
+                  <th
+                    colspan="2"
+                    class="text-center font-base-medium text-bs-dark py-4"
+                  >
+                    {{ generatedTable.qid }} - {{ generatedTable.questionText }}
+                  </th>
+                </tr>
+              </thead>
+
+              <tbody class="table-border">
+                @for(row of generatedTable.rows; track row.answer) {
+                <tr>
+                  <td class="table-border font-base-medium text-bs-dark px-3">
+                    {{ row.answer }}
+                  </td>
+                  <td class="table-border text-center">{{ row.count }}</td>
+                </tr>
+                }
+              </tbody>
+            </table>
+            } }
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center p-2">
+      <!-- footer -->
+
+      <div>Tip: Drag & drop the variables in the right side space</div>
+      <div class="d-flex align-items-center column-gap-3">
+        <button class="btn-bs-grey-100-outline text-bs-grey-100">Reset</button>
+        <button class="btn-bs-grey-100">Cancel</button>
+        <button class="btn-bs-purple-500">Confirm & Save</button>
+      </div>
+    </div>
+  </div>
+</app-common-dialog>
