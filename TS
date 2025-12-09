@@ -1,0 +1,266 @@
+import { CommonDialogComponent } from "@/app/components/common-dialog/common-dialog.component";
+import { CustomDropdownComponent } from "@/app/components/custom-dropdown/custom-dropdown.component";
+import {
+  CdkDrag,
+  CdkDragDrop,
+  CdkDragEnter,
+  CdkDragExit,
+  CdkDropList,
+} from "@angular/cdk/drag-drop";
+import { CommonModule } from "@angular/common";
+import {
+  Component,
+  ElementRef,
+  EventEmitter,
+  Input,
+  Output,
+  ViewChild,
+} from "@angular/core";
+import { FormsModule, ReactiveFormsModule } from "@angular/forms";
+import { InputSwitchModule } from "primeng/inputswitch";
+interface Question {
+  id: string;
+  question: string;
+  answers: string[];
+}
+
+interface ColumnTable {
+  type: "column";
+  qid: string;
+  questionText: string;
+  headers: string[];
+  values: number[];
+}
+
+interface RowTable {
+  type: "row";
+  qid: string;
+  questionText: string;
+  rows: { answer: string; count: number }[];
+}
+
+type GeneratedTable = ColumnTable | RowTable | null;
+
+@Component({
+  selector: "app-custom-data-table",
+  imports: [
+    CommonDialogComponent,
+    CdkDrag,
+    CdkDropList,
+    CustomDropdownComponent,
+    FormsModule,
+    InputSwitchModule,
+    CommonModule,
+  ],
+  templateUrl: "./custom-data-table.component.html",
+  styleUrl: "./custom-data-table.component.scss",
+})
+export class CustomDataTableComponent {
+  @Output() close = new EventEmitter<void>();
+  @Input() visible: boolean = false;
+  selectedQuestionId: string | null = null;
+  generatedTable: GeneratedTable = null; // holds the generated table data
+  rowDropList: Question[] = [];
+  columnDropList: Question[] = [];
+  rowActive = false;
+  columnActive = false;
+  selectedPosition: string = "";
+  isHideEnabled = true;
+  mode: "normal" | "compact" = "normal";
+  @ViewChild("searchInput") searchInput!: ElementRef<HTMLInputElement>;
+  showSearch: boolean = true;
+
+  // multiple question card drag and drop
+  selectedRowQuestions: Question[] = [];
+  selectedColumnQuestions: Question[] = [];
+  generatedMatrix: { row: string; cols: string[] }[] = [];
+
+  focusSearchInput(): void {
+    this.searchInput.nativeElement.focus();
+  }
+
+  onClose() {
+    this.close.emit();
+  }
+
+  questions: Question[] = [
+    {
+      id: "Q1",
+      question: "What is your age?",
+      answers: ["18-25", "26-35", "36-45", "45+"],
+    },
+    {
+      id: "Q2",
+      question: "What is your gender?",
+      answers: ["Male", "Female", "Non-binary", "Prefer not to say"],
+    },
+    {
+      id: "Q3",
+      question: "What is your age?",
+      answers: ["18-25", "26-35", "36-45", "45+"],
+    },
+    {
+      id: "Q4",
+      question: "What is your age?",
+      answers: ["18-25", "26-35", "36-45", "45+"],
+    },
+    {
+      id: "Q5",
+      question: "What is your gender?",
+      answers: ["Male", "Female", "Non-binary", "Prefer not to say"],
+    },
+    {
+      id: "Q6",
+      question: "What is your gender?",
+      answers: ["Male", "Female", "Non-binary", "Prefer not to say"],
+    },
+  ];
+
+  positions = [
+    { label: "Row", value: "row" },
+    { label: "Column", value: "column" },
+  ];
+
+  selectQuestion(id: string) {
+    this.selectedQuestionId = id;
+  }
+
+  get selectedAnswers(): string[] {
+    const q = this.questions.find((x) => x.id === this.selectedQuestionId);
+    return q ? q.answers : [];
+  }
+
+  // Drag and drop question code:
+  onDrop(event: CdkDragDrop<Question[]>, dropType: "row" | "column") {
+    const q = event.item.data;
+
+    if (!q) return;
+
+    if (dropType === "row") {
+      this.selectedRowQuestions.push({ ...q });
+      this.rowActive = false;
+    }
+
+    if (dropType === "column") {
+      this.selectedColumnQuestions.push({ ...q });
+      this.columnActive = false;
+    }
+
+    this.generateOutputTable();
+  }
+
+  generateColumnTable(question: Question) {
+    this.generatedTable = {
+      type: "column",
+      qid: question.id,
+      questionText: question.question,
+      headers: question.answers,
+      values: question.answers.map(() => Math.floor(Math.random() * 100)),
+    };
+  }
+
+  generateRowTable(question: Question) {
+    this.generatedTable = {
+      type: "row",
+      qid: question.id,
+      questionText: question.question,
+      rows: question.answers.map((ans) => ({
+        answer: ans,
+        count: Math.floor(Math.random() * 100),
+      })),
+    };
+  }
+
+  onDropListEnter(event: CdkDragEnter<Question[]>) {
+    if (event.container.id === "columnList") this.columnActive = true;
+    if (event.container.id === "rowList") this.rowActive = true;
+  }
+
+  onDropListExit(event: CdkDragExit<Question[]>) {
+    if (event.container.id === "columnList") this.columnActive = false;
+    if (event.container.id === "rowList") this.rowActive = false;
+  }
+
+  toggleVisibility() {
+    console.log("");
+  }
+
+  setMode(m: "normal" | "compact") {
+    this.mode = m;
+  }
+
+  // multiple question card drag and drop
+  generateMatrix() {
+    const rowAnswers = this.selectedRowQuestions[0].answers;
+    const colAnswers = this.selectedColumnQuestions[0].answers;
+
+    this.generatedMatrix = rowAnswers.map((rowLabel) => ({
+      row: rowLabel,
+      cols: colAnswers.map(() => "nn"),
+    }));
+  }
+
+  //       cols: colCombos.map(() => "nn"),
+  generateOutputTable() {
+    const hasRows = this.selectedRowQuestions.length > 0;
+    const hasCols = this.selectedColumnQuestions.length > 0;
+
+    if (hasRows && hasCols) {
+      this.generatedTable = null;
+      this.generateMatrix();
+      return;
+    }
+
+    if (hasCols && !hasRows) {
+      const q = this.selectedColumnQuestions[0];
+      this.generateColumnTable(q);
+      return;
+    }
+
+    if (hasRows && !hasCols) {
+      const q = this.selectedRowQuestions[0];
+      this.generateRowTable(q);
+      return;
+    }
+
+    this.generatedTable = null;
+    this.generatedMatrix = [];
+  }
+
+  // combinations of generating:
+  generateRowCombinations() {
+    const answerGroups = this.selectedRowQuestions.map((q) => q.answers);
+
+    const combine = (arrays: string[][]): string[][] => {
+      if (arrays.length === 0) return [[]];
+      const rest = combine(arrays.slice(1));
+      return arrays[0].flatMap((a) => rest.map((r) => [a, ...r]));
+    };
+
+    return combine(answerGroups).map((combo) =>
+      combo.map((ans, i) => `${this.selectedRowQuestions[i].id}-${ans}`)
+    );
+  }
+
+  generateColumnCombinations() {
+    const answerGroups = this.selectedColumnQuestions.map((q) => q.answers);
+
+    const combine = (arrays: string[][]): string[][] => {
+      if (arrays.length === 0) return [[]];
+      const rest = combine(arrays.slice(1));
+      return arrays[0].flatMap((a) => rest.map((r) => [a, ...r]));
+    };
+
+    return combine(answerGroups).map((combo) =>
+      combo.map((ans, i) => `${this.selectedColumnQuestions[i].id}-${ans}`)
+    );
+  }
+
+  get rowCombos(): string[] {
+    return this.generateRowCombinations().map((c) => c.join(" | "));
+  }
+
+  get columnCombos(): string[] {
+    return this.generateColumnCombinations().map((c) => c.join(" | "));
+  }
+}
