@@ -1,0 +1,132 @@
+.question-card{
+  padding:18px 108px 18px 24px;
+  border:1.5px solid #E8E8E9;
+}
+
+.search-section{
+  border:1.5px solid #E8E8E9;
+}
+
+.question-card.active {
+  background: #F4E8FF;
+}
+
+.left-question-section{
+  width: 330px;
+}
+
+/* ROWS (vertical centered) */
+.rows-label {
+  writing-mode: sideways-lr;
+  text-orientation: sideways-right;
+  height: 65vh;
+}
+
+.pointer{
+  cursor: pointer;
+}
+
+
+.answer-card {
+  margin-bottom: 2px;
+}
+
+.question-drag-section{
+  border:1.5px solid #E8E8E9;
+}
+
+// drag and drop styles
+
+.cdk-drag-preview {
+  background: #fff;
+  padding: 12px;
+  border: 1px solid #ccc;
+}
+
+.cdk-drag-placeholder {
+  opacity: 0;
+}
+
+.table-content table {
+  border-collapse: collapse;
+}
+
+.table-content td,
+.table-content th {
+  padding: 8px;
+  border: 1px solid #ddd;
+}
+
+
+//----------------------------------------------------------------------------------
+.drop-active {
+  background-color: #F4E8FF !important;
+  border: 2px dashed #B388F5 !important;
+  transition: 0.2s ease-in-out;
+  color:#8D1CFF;
+  font-weight: 500;
+}
+
+.rows-label {
+  max-width: 60px;
+}
+
+#columnList{
+  max-height: 60px;
+}
+
+.table-wrapper{
+  border:1.5px solid #E8E8E9;
+}
+
+.table-border{
+  border:1.5px solid #E8E8E9;
+}
+
+
+// button styles
+.outline-btn{
+  border:1.5px solid #E8E8E9;
+  border-radius: 24px;
+  padding:12px 16px;
+  background-color: white;
+  color:#66666C;
+}
+
+.button-excel{
+  border:1.5px solid #E8E8E9;
+  border-radius: 24px;
+  padding:12px 16px;
+  background-color: white;
+  color:#000000;
+}
+
+
+// toggle button styles section
+.mode-toggle {
+  display: flex;
+  background: #fff;
+  border: 1px solid #E8E8E9;
+  border-radius: 24px;
+  overflow: hidden;
+  width: fit-content;
+}
+
+.toggle-option {
+  padding: 12px 16px;
+  cursor: pointer;
+  font-size: 16px;
+  color: #66666C;
+  border-right: 1px solid #E8E8E9;
+  transition: 0.2s ease;
+
+  &:last-child {
+    border-right: none;
+  }
+
+  &.active {
+    background: #F4E8FF;
+    color: #8D1CFF;
+    font-weight: 600;
+  }
+}
